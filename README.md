@@ -5,3 +5,5 @@
 Установить скрипт для [«VK Play Live»](https://github.com/c0IIwr/Chat-Image-Display/raw/main/VK%20Play%20Chat%20Image%20Display.user.js)
 
 Установить скрипт для [«Boosty»](https://github.com/c0IIwr/Chat-Image-Display/raw/main/Boosty%20Chat%20Image%20Display.user.js)
+
+Обновить страницу браузера
