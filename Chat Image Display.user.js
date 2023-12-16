@@ -3,6 +3,7 @@
 // @namespace    https://github.com/c0IIwr/Combined-Chat-Image-Display/raw/main/Chat%20Image%20Display.user.js
 // @version      1.3
 // @description  Display images in the chat room
+// @description:ru Отображение изображений в чате
 // @author       c0IIwr
 // @match        https://vkplay.live/*
 // @match        https://boosty.to/*/streams/video_stream
