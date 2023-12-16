@@ -7,7 +7,6 @@
 // @match        https://vkplay.live/*
 // @match        https://boosty.to/*/streams/video_stream
 // @icon         https://vkplay.live/favicon.ico
-// @icon         https://boosty.to/apple-touch-icon.png
 // @grant        none
 // ==/UserScript==
 
