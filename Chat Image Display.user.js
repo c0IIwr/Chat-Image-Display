@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Chat Image Display
-// @namespace    https://github.com/c0IIwr/Chat-Image-Display/raw/main/Chat%20Image%20Display.user.js
+// @namespace    https://c0iiwr.github.io/Chat-Image-Display/
 // @version      1.3.1
 // @description  Display images in the chat room
 // @description:ru Отображение изображений в чате
