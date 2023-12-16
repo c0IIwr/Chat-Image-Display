@@ -2,8 +2,6 @@
 // @name         Chat Image Display
 // @namespace    https://c0iiwr.github.io/Chat-Image-Display/
 // @version      1.3
-// @updateurl    https://github.com/c0IIwr/Chat-Image-Display/raw/main/Chat%20Image%20Display.user.js
-// @downloadurl  https://github.com/c0IIwr/Chat-Image-Display/raw/main/Chat%20Image%20Display.user.js
 // @description  Display images in the chat room
 // @description:ru Отображение изображений в чате
 // @author       c0IIwr
