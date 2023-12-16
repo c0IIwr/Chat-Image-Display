@@ -13,21 +13,55 @@
 (function() {
     'use strict';
 
-    // Общая функция для обработки изображений в чате
     function processChatImages(node, messageSelector) {
         const messageElements = node.querySelectorAll(messageSelector);
         messageElements.forEach(link => {
             const matched = link.href.match(/(\.(jpeg|jpg|gif|png|webp))($|\?.*$|#.*$)/i);
             if (matched !== null) {
-                // здесь логика обработки ссылки и создание элемента изображения
-                // ...
-                // Пропустим повтор кода для компактности
-                // ...
+                link.href = link.href.substring(0, link.href.indexOf(matched[1]) + matched[1].length);
+                link.textContent = link.href;
+                link.style.display = 'none';
+                let image = new Image();
+                image.src = link.href;
+                image.style.maxWidth = '100%';
+                image.style.maxHeight = '322px';
+                image.style.display = 'block';
+                image.style.cursor = 'pointer';
+
+                let clicks = 0;
+                image.onclick = (event) => {
+                    const doubleClickDelay = 400;
+                    clicks++;
+
+                    if (clicks === 1) {
+                        setTimeout(() => {
+                            if (clicks === 1) {
+                                navigator.clipboard.writeText(link.href)
+                                    .then(() => {
+                                    console.log('Link copied to clipboard: ' + link.href);
+                                })
+                                    .catch(err => {
+                                    console.error('Unable to copy link: ' + err);
+                                });
+                            }
+                            clicks = 0;
+                        }, doubleClickDelay);
+                    } else if (clicks === 2) {
+                        window.open(link.href, '_blank');
+                        clicks = 0;
+                    }
+                };
+
+                image.onload = () => {
+                    if (!link.imageLoaded) {
+                        link.imageLoaded = true;
+                        link.parentNode.insertBefore(image, link.nextSibling);
+                    }
+                };
             }
         });
     }
 
-    // Определение сайта и соответствующих селекторов
     let chatSelector, messageSelector;
     if (location.href.includes('vkplay.live')) {
         chatSelector = '.Chat_chat_x6IXr.Chat_root_tUBSs';
@@ -37,7 +71,6 @@
         messageSelector = '.ChatMessage_text_sXPvk a';
     }
 
-    // Наблюдатель за мутациями и запуск предварительной обработки
     if (chatSelector) {
         const chatObserver = new MutationObserver(mutations => {
             mutations.forEach(mutation => {
