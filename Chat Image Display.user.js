@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Chat Image Display
 // @namespace    https://c0iiwr.github.io/Chat-Image-Display/
-// @version      1.3
+// @version      1.4
 // @description  Display images in the chat room
 // @description:ru Отображение изображений в чате
 // @author       c0IIwr
@@ -15,6 +15,7 @@
     'use strict';
 
     function processChatImages(node, messageSelector) {
+        const scrollable = document.querySelector('.ChatBoxBase_root_k1P9S');
         const messageElements = node.querySelectorAll(messageSelector);
         messageElements.forEach(link => {
             const matched = link.href.match(/(\.(jpeg|jpg|gif|png|webp|avif|gifv))($|\?.*$|#.*$)/i);
@@ -60,6 +61,9 @@
                     if (!link.imageLoaded) {
                         link.imageLoaded = true;
                         link.parentNode.insertBefore(image, link.nextSibling);
+                        if (scrollable) {
+                            scrollable.scrollTop = scrollable.scrollHeight
+                        }
                     }
                 };
             }
