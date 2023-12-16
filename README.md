@@ -7,3 +7,5 @@
 Установить скрипт для [«Boosty»](https://github.com/c0IIwr/Chat-Image-Display/raw/main/Boosty%20Chat%20Image%20Display.user.js)
 
 Обновить страницу браузера 😁👍
+
+<img  src="https://c0IIwr.github.io/Chat-Image-Display/zapaska-archive.gif">
