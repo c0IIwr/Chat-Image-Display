@@ -6,7 +6,7 @@
 // @description:ru Отображение изображений в чате
 // @author       c0IIwr
 // @match        https://vkplay.live/*
-// @match        https://boosty.to/*/streams/video_stream
+// @match        https://boosty.to/*
 // @icon         https://cdn-icons-png.flaticon.com/512/6631/6631821.png
 // @grant        none
 // ==/UserScript==
