@@ -6,7 +6,7 @@
 // @author       c0IIwr
 // @match        https://vkplay.live/*
 // @match        https://boosty.to/*/streams/video_stream
-// @icon         https://vkplay.live/favicon.ico
+// @icon         https://cdn-icons-png.flaticon.com/512/6631/6631821.png
 // @grant        none
 // ==/UserScript==
 
