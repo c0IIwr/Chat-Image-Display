@@ -17,7 +17,7 @@
     function processChatImages(node, messageSelector) {
         const messageElements = node.querySelectorAll(messageSelector);
         messageElements.forEach(link => {
-            const matched = link.href.match(/(\.(jpeg|jpg|gif|png|webp))($|\?.*$|#.*$)/i);
+            const matched = link.href.match(/(\.(jpeg|jpg|gif|png|webp|avif))($|\?.*$|#.*$)/i);
             if (matched !== null) {
                 link.href = link.href.substring(0, link.href.indexOf(matched[1]) + matched[1].length);
                 link.textContent = link.href;
