@@ -17,11 +17,14 @@
     function processChatImages(node, messageSelector) {
         const messageElements = node.querySelectorAll(messageSelector);
         messageElements.forEach(link => {
-            const matched = link.href.match(/(\.(jpeg|jpg|gif|png|webp|avif))($|\?.*$|#.*$)/i);
+            const matched = link.href.match(/(\.(jpeg|jpg|gif|png|webp|avif|gifv))($|\?.*$|#.*$)/i);
             if (matched !== null) {
                 link.href = link.href.substring(0, link.href.indexOf(matched[1]) + matched[1].length);
                 link.textContent = link.href;
                 link.style.display = 'none';
+                if (matched[2] === 'gifv') {
+                    link.href = link.href.substring(0, link.href.indexOf(matched[1]) + matched[1].length - 1);
+                }
                 let image = new Image();
                 image.src = link.href;
                 image.style.maxWidth = '100%';
