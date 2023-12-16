@@ -4,8 +4,10 @@
 // @version      1.3
 // @description  Display images directly in VK Play Live chat and Boosty streams chat
 // @author       c0IIwr
-// @match        https://vkplay.live/*, https://boosty.to/*/streams/video_stream
-// @icon         https://vkplay.live/favicon.ico, https://boosty.to/apple-touch-icon.png
+// @match        https://vkplay.live/*
+// @match        https://boosty.to/*/streams/video_stream
+// @icon         https://vkplay.live/favicon.ico
+// @icon         https://boosty.to/apple-touch-icon.png
 // @grant        none
 // ==/UserScript==
 
