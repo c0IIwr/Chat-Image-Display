@@ -2,7 +2,7 @@
 // @name         Chat Image Display
 // @namespace    https://github.com/c0IIwr/Combined-Chat-Image-Display/raw/main/Chat%20Image%20Display.user.js
 // @version      1.3
-// @description  Display images directly in various chat services
+// @description  Display images in the chat room
 // @author       c0IIwr
 // @match        https://vkplay.live/*
 // @match        https://boosty.to/*/streams/video_stream
