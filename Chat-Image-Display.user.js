@@ -1,14 +1,15 @@
 // ==UserScript==
 // @name         Chat Image Display
 // @namespace    https://c0iiwr.github.io/Chat-Image-Display/
-// @version      1.6
+// @version      1.7
 // @description  Displaying images, video, and audio in chat
 // @description:ru Отображение изображений, видео и аудио в чате
 // @author       c0IIwr
 // @match        https://vkplay.live/*
 // @match        https://boosty.to/*
+// @connect      api.imgur.com
 // @icon         https://cdn-icons-png.flaticon.com/512/6631/6631821.png
-// @grant        none
+// @grant        GM_xmlhttpRequest
 // ==/UserScript==
 
 (function () {
@@ -17,12 +18,14 @@
         domain: "vkplay.live",
         chatSelector: ".Chat_chat_x6IXr.Chat_root_tUBSs",
         messageSelector: ".ChatMessage_message_r1jzC a",
-        scrollableSelector: ".ChatBoxBase_root_k1P9S"
+        scrollableSelector: ".ChatBoxBase_root_k1P9S",
+        chatInputSelector: '.ce-paragraph.cdx-block[contenteditable="true"]'
     }, {
         domain: "boosty.to",
         chatSelector: '[data-test-id="CHAT:root"]',
         messageSelector: ".ChatMessage_text_sXPvk a",
-        scrollableSelector: ".ReactVirtualized__Grid__innerScrollContainer"
+        scrollableSelector: ".ReactVirtualized__Grid__innerScrollContainer",
+        chatInputSelector: '.ce-paragraph.cdx-block[contenteditable="true"]'
     },];
 
     function getCurrentSiteConfig() {
@@ -33,6 +36,109 @@
     function getScrollableElement(config) {
         return document.querySelector(config.scrollableSelector);
     }
+
+    function clickLikeButton() {
+        let likeButton = document.querySelector("[class^=LikeButton_container_]");
+        if (likeButton && likeButton.querySelector(".LikeButton_iconLiked_ETS_f") === null) {
+            likeButton.click();
+        }
+    }
+
+    function clickBonusButton() {
+        let bonusButton = document.querySelector("[class^=PointActions_buttonBonus_]");
+        if (bonusButton) {
+            bonusButton.click();
+        }
+    }
+    setInterval(() => {
+        clickLikeButton();
+        clickBonusButton();
+    }, 1000);
+    const clientId = 'e7ba2c27273a2fe';
+    const loadingAnimation = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+    let animationIndex = 0;
+    let animationInterval;
+
+    function displayLoadingMessage() {
+        const chatInput = document.querySelector(currentSiteConfig.chatInputSelector);
+        if (chatInput) {
+            startLoadingAnimation(chatInput);
+        } else {
+            console.error('Chat input not found');
+        }
+    }
+
+    function startLoadingAnimation(chatInput) {
+        animationInterval = setInterval(function () {
+            chatInput.textContent = 'Загрузка ' + loadingAnimation[animationIndex];
+            animationIndex = (animationIndex + 1) % loadingAnimation.length;
+        }, 100);
+    }
+
+    function stopLoadingAnimation(chatInput) {
+        clearInterval(animationInterval);
+        chatInput.textContent = '';
+    }
+
+    function uploadToImgur(file) {
+        displayLoadingMessage();
+        let formData = new FormData();
+        formData.append('image', file);
+        GM_xmlhttpRequest({
+            method: 'POST',
+            url: 'https://api.imgur.com/3/image',
+            headers: {
+                'Authorization': 'Client-ID ' + clientId,
+                'Accept': 'application/json'
+            },
+            data: formData,
+            onload: function (response) {
+                stopLoadingAnimation(document.querySelector(currentSiteConfig.chatInputSelector));
+                const jsonResponse = JSON.parse(response.responseText);
+                if (jsonResponse.success) {
+                    const link = jsonResponse.data.link;
+                    postLinkInChat(link);
+                } else {
+                    console.error('Imgur upload failed', jsonResponse);
+                    document.querySelector(currentSiteConfig.chatInputSelector).textContent = 'Неверный формат файла';
+                    setTimeout(() => {
+                        document.querySelector(currentSiteConfig.chatInputSelector).textContent = ''
+                    }, 500);
+                }
+            },
+            onerror: function (response) {
+                stopLoadingAnimation(document.querySelector(currentSiteConfig.chatInputSelector));
+                console.error('Imgur upload error', response);
+            }
+        });
+    }
+
+    function postLinkInChat(link) {
+        const chatInput = document.querySelector(currentSiteConfig.chatInputSelector);
+        if (chatInput) {
+            const event = new Event('input', {
+                bubbles: true,
+                cancelable: true,
+            });
+            const modifiedLink = link.replace(/h\./, '.');
+            chatInput.textContent = modifiedLink;
+            chatInput.dispatchEvent(event);
+        } else {
+            console.error('Chat input not found');
+        }
+    }
+
+    function handleFileDrop(event) {
+        event.preventDefault();
+        const files = event.dataTransfer.files;
+        if (files.length) {
+            uploadToImgur(files[0]);
+        }
+    }
+    document.addEventListener('drop', handleFileDrop);
+    document.addEventListener('dragover', function (event) {
+        event.preventDefault();
+    });
 
     function processChatImage(node, messageSelector, scrollable) {
         const messageElements = node.querySelectorAll(messageSelector);
