@@ -4,7 +4,7 @@
 
 ## Установка
 
-> Установить расширение [«Tampermonkey»](https://www.tampermonkey.net/) для [«Chrome»](https://chrome.google.com/webstore/detail/dhdgffkkebhmkfjojejmpbldmpobfkfo), [«Microsoft Edge»](https://microsoftedge.microsoft.com/addons/detail/iikmkjmpaadaobahmlepeloendndfphd), [«Firefox»](https://addons.mozilla.org/en-US/firefox/addon/tampermonkey/), [«Opera Next»](https://addons.opera.com/en/extensions/details/tampermonkey-beta/), Альтернатива для [«Safari»](https://apps.apple.com/app/userscripts/id1463298887)
+> Установить расширение [«Tampermonkey»](https://www.tampermonkey.net/) для [«Chrome»](https://chrome.google.com/webstore/detail/dhdgffkkebhmkfjojejmpbldmpobfkfo), [«Edge»](https://microsoftedge.microsoft.com/addons/detail/iikmkjmpaadaobahmlepeloendndfphd), [«Firefox»](https://addons.mozilla.org/en-US/firefox/addon/tampermonkey/), [«Opera»](https://addons.opera.com/en/extensions/details/tampermonkey-beta/), Альтернатива для [«Safari»](https://apps.apple.com/app/userscripts/id1463298887)
 >
 > Установить [«скрипт»](https://github.com/c0IIwr/Chat-Image-Display/raw/main/Chat-Image-Display.user.js)
 >
@@ -33,7 +33,7 @@
 
 На каких стриминговых платформах доступен скрипт?
 
-> На данный момент скрипт работает для сайтов [«VK Play Live»](https://vkplay.live/) и [«Boosty»](https://boosty.to/). В будущем скрипт будет доступен для [«Kick»](https://kick.com/), [«Twitch»](https://www.twitch.tv/), [«YouTube»](https://www.youtube.com/), [«Trovo»](https://trovo.live/), [«GoodGame»](https://goodgame.ru/)
+> На данный момент скрипт работает для сайтов [«VK Play Live»](https://vkplay.live/), [«Boosty»](https://boosty.to/), [«Kick»](https://kick.com/). В будущем скрипт будет доступен для [«Twitch»](https://www.twitch.tv/), [«YouTube»](https://www.youtube.com/), [«Trovo»](https://trovo.live/), [«GoodGame»](https://goodgame.ru/)
 
 Почему Tampermonkey, если скрипт можно добавить в браузер с помощью любого расширения, которое умеет инъектить код в открытые страницы? ([«Пример»](https://chromewebstore.google.com/detail/custom-javascript-for-web/ddbjnfjiigjmcpcpkmhogomapikjbjdk))
 
@@ -86,3 +86,6 @@
 - Добавлен автолайк для Boosty
 - Добавлен автолайк для VK Play Live (дает 100 баллов канала, и поддержку стримера❤️)
 - Добавлен автосбор бонусных баллов (если не установлен [«VK Play Tools»](https://chromewebstore.google.com/detail/vk-play-tools/pgcocghliackkooeoiihnkdnbempgjfk))
+
+**v1.8**
+- Добавлена поддержка для Kick
