@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name           Chat Image Display
 // @namespace      https://c0iiwr.github.io/Chat-Image-Display/
-// @version        1.9
+// @version        1.10
 // @description    Displaying images, video, and audio in chat
 // @description:ru Отображение изображений, видео и аудио в чате
 // @author         c0IIwr
@@ -22,9 +22,11 @@
 
     const siteConfigs = [{
         domain: 'vkplay.live',
+        scrollableSelector: '.ChatBoxBase_root_k1P9S',
         chatInputSelector: '.ce-paragraph.cdx-block[contenteditable="true"]'
     }, {
         domain: 'boosty.to',
+        scrollableSelector: '.ReactVirtualized__Grid__innerScrollContainer',
         chatInputSelector: '.ce-paragraph.cdx-block[contenteditable="true"]'
     }, {
         domain: 'kick.com',
@@ -56,7 +58,7 @@
     }
 
     function clickBonusButton() {
-        let bonusButton = document.querySelector('[class^=PointActions_buttonBonus_]',);
+        let bonusButton = document.querySelector('[class^=PointActions_buttonBonus_]');
         if (bonusButton) {
             bonusButton.click();
         }
@@ -66,12 +68,13 @@
         clickBonusButton();
     }, 1000);
 
+    const currentSiteConfig = getCurrentSiteConfig();
     const loadingAnimation = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
     let animationIndex = 0;
     let animationInterval;
 
     function displayLoadingMessage() {
-        const chatInput = document.querySelector(currentSiteConfig.chatInputSelector,);
+        const chatInput = document.querySelector(currentSiteConfig.chatInputSelector);
         if (chatInput) {
             startLoadingAnimation(chatInput);
         }
@@ -113,7 +116,7 @@
             url: 'https://kappa.lol/api/upload',
             data: formData,
             onload: function (response) {
-                stopLoadingAnimation(document.querySelector(currentSiteConfig.chatInputSelector),);
+                stopLoadingAnimation(document.querySelector(currentSiteConfig.chatInputSelector));
                 const jsonResponse = JSON.parse(response.responseText);
                 const link = jsonResponse.link;
                 const fileExtension = getFileExtension(file.name);
@@ -122,14 +125,14 @@
                 postLinkInChat(completeLink);
             },
             onerror: function (response) {
-                stopLoadingAnimation(document.querySelector(currentSiteConfig.chatInputSelector),);
+                stopLoadingAnimation(document.querySelector(currentSiteConfig.chatInputSelector));
                 console.error('[CID] Kappa upload error', response);
             },
         });
     }
 
     function postLinkInChat(link) {
-        const chatInput = document.querySelector(currentSiteConfig.chatInputSelector,);
+        const chatInput = document.querySelector(currentSiteConfig.chatInputSelector);
         if (chatInput) {
             chatInput.textContent = link;
             const event = new Event('input', {
@@ -157,6 +160,7 @@
     let processChatImage = () => {
         let imageExtensions = ['.jpeg', '.jpg', '.png', '.gif', '.webp', '.avif'];
         let links = [...document.querySelectorAll('[href]'),];
+        let siteConfig = getCurrentSiteConfig();
         links.forEach((imageElement) => {
             let imageLink = imageElement.getAttribute('href');
             if (imageLink.endsWith('.gifv')) {
@@ -166,7 +170,7 @@
             }
             let matched = imageLink.match(/(\.(jpeg|jpg|png|gif|webp|avif))(\S*)/i);
             if (matched !== null) {
-                let cleanLink = imageLink.substring(0, imageLink.indexOf(matched[1]) + matched[1].length,);
+                let cleanLink = imageLink.substring(0, imageLink.indexOf(matched[1]) + matched[1].length);
                 let spaceIndex = cleanLink.lastIndexOf(' ');
                 let finalLink = spaceIndex !== -1 ? cleanLink.substring(0, spaceIndex) : cleanLink;
                 imageElement.setAttribute('href', finalLink);
@@ -204,14 +208,19 @@
                                 wrapperDiv.style.maxWidth = '100%';
                                 wrapperDiv.style.position = 'relative';
                                 wrapperDiv.appendChild(image);
-                                imageLink.parentNode.insertBefore(wrapperDiv, imageLink.nextSibling,);
+                                imageLink.parentNode.insertBefore(wrapperDiv, imageLink.nextSibling);
                             }
                         };
                     });
                     let parent = imageElement.parentElement;
                     parent.appendChild(image);
                     parent.removeChild(imageElement);
-                    parent.scrollIntoView(false);
+                    if (siteConfig && siteConfig.scrollableSelector) {
+                        let scrollableElement = document.querySelector(siteConfig.scrollableSelector);
+                        scrollableElement.scrollTop = scrollableElement.scrollHeight;
+                    } else {
+                        parent.scrollIntoView(false);
+                    }
                 }
             }
         });
@@ -220,6 +229,7 @@
     let processChatVideo = () => {
         let videoExtensions = ['.mp4', '.webm', '.mov'];
         let links = [...document.querySelectorAll('[href]'),];
+        let siteConfig = getCurrentSiteConfig();
         links.forEach((videoElement) => {
             let videoLink = videoElement.getAttribute('href');
             if (videoExtensions.some((ext) => videoLink.includes(ext))) {
@@ -251,7 +261,12 @@
                     wrapperDiv.style.display = 'inline-block';
                     wrapperDiv.style.maxWidth = '100%';
                     wrapperDiv.style.position = 'relative';
-                    parent.scrollIntoView(false);
+                    if (siteConfig && siteConfig.scrollableSelector) {
+                        let scrollableElement = document.querySelector(siteConfig.scrollableSelector);
+                        scrollableElement.scrollTop = scrollableElement.scrollHeight;
+                    } else {
+                        parent.scrollIntoView(false);
+                    }
                 };
                 let parent = videoElement.parentElement;
                 parent.appendChild(video);
@@ -263,6 +278,7 @@
     let processChatAudio = () => {
         let audioExtensions = ['.mp3', '.ogg'];
         let links = [...document.querySelectorAll('[href]'),];
+        let siteConfig = getCurrentSiteConfig();
         links.forEach((audioElement) => {
             let audioLink = audioElement.getAttribute('href');
             if (audioExtensions.some((ext) => audioLink.includes(ext))) {
@@ -293,7 +309,12 @@
                     wrapperDiv.style.display = 'inline-block';
                     wrapperDiv.style.maxWidth = '100%';
                     wrapperDiv.style.position = 'relative';
-                    parent.scrollIntoView(false);
+                    if (siteConfig && siteConfig.scrollableSelector) {
+                        let scrollableElement = document.querySelector(siteConfig.scrollableSelector);
+                        scrollableElement.scrollTop = scrollableElement.scrollHeight;
+                    } else {
+                        parent.scrollIntoView(false);
+                    }
                 };
                 let parent = audioElement.parentElement;
                 parent.appendChild(audio);
@@ -312,5 +333,4 @@
     };
 
     processChatMedia((callback) => processChatMedia(callback));
-    const currentSiteConfig = getCurrentSiteConfig();
 })();
