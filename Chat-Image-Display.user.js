@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name           Chat Image Display
 // @namespace      https://c0iiwr.github.io/Chat-Image-Display/
-// @version        1.10
+// @version        1.11
 // @description    Displaying images, video, and audio in chat
 // @description:ru Отображение изображений, видео и аудио в чате
 // @author         c0IIwr
@@ -248,7 +248,7 @@
                     clearTimeout(controlsTimeout);
                     video.play();
                     video.controls = true;
-                    video.muted = false;
+                    video.muted = true;
                 };
                 video.onmouseout = () => {
                     controlsTimeout = setTimeout(() => {
@@ -297,7 +297,7 @@
                 audio.onmouseover = () => {
                     clearTimeout(controlsTimeout);
                     audio.play();
-                    audio.muted = false;
+                    audio.muted = true;
                 };
                 audio.onmouseout = () => {
                     controlsTimeout = setTimeout(() => {
