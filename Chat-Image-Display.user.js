@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name           Chat Image Display
 // @namespace      https://c0iiwr.github.io/Chat-Image-Display/
-// @version        1.11
+// @version        1.12
 // @description    Displaying images, video, and audio in chat
 // @description:ru Отображение изображений, видео и аудио в чате
 // @author         c0IIwr
@@ -51,7 +51,7 @@
     }
 
     function clickLikeButton() {
-        let likeButton = document.querySelector('[class^=LikeButton_container_]');
+        let likeButton = document.querySelector('[class^=LikeButton_]');
         if (likeButton && likeButton.querySelector('.LikeButton_iconLiked_ETS_f') === null) {
             likeButton.click();
         }
@@ -164,17 +164,14 @@
         links.forEach((imageElement) => {
             let imageLink = imageElement.getAttribute('href');
             if (imageLink.endsWith('.gifv')) {
-                imageLink = imageLink.slice(0, -1) + 'f';
+                imageLink = imageLink.slice(0, -1);
                 imageElement.setAttribute('href', imageLink);
                 imageElement.textContent = imageLink;
             }
             let matched = imageLink.match(/(\.(jpeg|jpg|png|gif|webp|avif))(\S*)/i);
             if (matched !== null) {
-                let cleanLink = imageLink.substring(0, imageLink.indexOf(matched[1]) + matched[1].length);
-                let spaceIndex = cleanLink.lastIndexOf(' ');
-                let finalLink = spaceIndex !== -1 ? cleanLink.substring(0, spaceIndex) : cleanLink;
-                imageElement.setAttribute('href', finalLink);
-                imageElement.textContent = finalLink;
+                imageElement.setAttribute('href', imageLink);
+                imageElement.textContent = imageLink;
                 imageElement.style.display = 'none';
                 if (imageExtensions.some((ext) => imageLink.includes(ext))) {
                     let image = document.createElement('img');
@@ -186,18 +183,24 @@
                     image.style.borderRadius = '4px';
                     image.style.margin = '4px';
                     let clicks = 0;
+                    image.addEventListener('mousedown', (event) => {
+                        if (event.which === 2) {
+                            event.preventDefault();
+                            window.open(imageLink, '_blank');
+                        }
+                    });
                     image.addEventListener('click', (event) => {
                         const doubleClickDelay = 400;
                         clicks++;
                         if (clicks === 1) {
                             setTimeout(() => {
                                 if (clicks === 1) {
-                                    navigator.clipboard.writeText(finalLink);
+                                    navigator.clipboard.writeText(imageLink);
                                 }
                                 clicks = 0;
                             }, doubleClickDelay);
                         } else if (clicks === 2) {
-                            window.open(finalLink, '_blank');
+                            window.open(imageLink, '_blank');
                             clicks = 0;
                         }
                         image.onload = () => {
@@ -243,6 +246,12 @@
                 video.style.display = 'block';
                 video.style.borderRadius = '4px';
                 video.style.margin = '4px';
+                video.addEventListener('mousedown', (event) => {
+                    if (event.which === 2) {
+                        event.preventDefault();
+                        window.open(videoLink, '_blank');
+                    }
+                });
                 let controlsTimeout;
                 video.onmouseover = () => {
                     clearTimeout(controlsTimeout);
@@ -293,6 +302,12 @@
                 audio.style.display = 'block';
                 audio.style.borderRadius = '4px';
                 audio.style.margin = '4px';
+                audio.addEventListener('mousedown', (event) => {
+                    if (event.which === 2) {
+                        event.preventDefault();
+                        window.open(audioLink, '_blank');
+                    }
+                });
                 let controlsTimeout;
                 audio.onmouseover = () => {
                     clearTimeout(controlsTimeout);
