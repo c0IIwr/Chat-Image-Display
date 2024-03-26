@@ -7,7 +7,7 @@
 // @author         c0IIwr
 // @match          https://www.twitch.tv/*
 // @match          https://goodgame.ru/*
-// @match          https://vkplay.live/*
+// @match          https://live.vkplay.ru/*
 // @match          https://trovo.live/*
 // @match          https://boosty.to/*
 // @match          https://kick.com/*
