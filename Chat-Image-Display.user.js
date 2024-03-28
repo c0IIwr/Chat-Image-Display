@@ -21,7 +21,7 @@
     'use strict';
 
     const siteConfigs = [{
-        domain: 'vkplay.live',
+        domain: 'live.vkplay.ru',
         scrollableSelector: '.ChatBoxBase_root_k1P9S',
         chatInputSelector: '.ce-paragraph.cdx-block[contenteditable="true"]'
     }, {
