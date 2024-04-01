@@ -31,13 +31,11 @@
 
 > Перетащи медиа файл в любое место окна браузера
 > 
-> При загрузке, ссылка копируется в буфер обмена _(Для твича и нуум временно отсутствует отображение прогресса загрузки)_
-> 
-> При загрузке видео/аудио файла, ползунок перемотки работает после перезагрузки страницы или после повторной отправки уже загруженного файла
+> При загрузке, ссылка копируется в буфер обмена _(Для твича отображается как заполнитель, Ctrl+V вставить из буфера)_
 
 На каких стриминговых платформах доступен скрипт?
 
-> На данный момент скрипт работает для сайтов [«VK Play Live»](https://vkplay.live/), [«Boosty»](https://boosty.to/), [«Kick»](https://kick.com/), [«Twitch»](https://www.twitch.tv/), [«GoodGame»](https://goodgame.ru/), [«Trovo»](https://trovo.live/), [«NUUM»](https://nuum.ru/). В будущем скрипт будет доступен для [«YouTube»](https://www.youtube.com/)
+> На данный момент скрипт работает для сайтов [«VK Play Live»](https://live.vkplay.ru/), [«Boosty»](https://boosty.to/), [«Kick»](https://kick.com/), [«Twitch»](https://www.twitch.tv/), [«GoodGame»](https://goodgame.ru/), [«Trovo»](https://trovo.live/), [«NUUM»](https://nuum.ru/)
 
 Почему Tampermonkey, если скрипт можно добавить в браузер с помощью любого расширения, которое умеет инъектить код в открытые страницы? ([«Пример»](https://chromewebstore.google.com/detail/custom-javascript-for-web/ddbjnfjiigjmcpcpkmhogomapikjbjdk))
 
@@ -115,3 +113,6 @@
 
 **v1.13**
 - Обновление в связи с переездом на новый домен VK Play
+
+**v1.14**
+- Улучшен автопрокрут чата
