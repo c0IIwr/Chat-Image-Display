@@ -1,13 +1,13 @@
 // ==UserScript==
 // @name           Chat Image Display
 // @namespace      https://c0iiwr.github.io/Chat-Image-Display/
-// @version        1.13.1
+// @version        1.14
 // @description    Displaying images, video, and audio in chat
 // @description:ru Отображение изображений, видео и аудио в чате
 // @author         c0IIwr
+// @match          https://live.vkplay.ru/*
 // @match          https://www.twitch.tv/*
 // @match          https://goodgame.ru/*
-// @match          https://live.vkplay.ru/*
 // @match          https://trovo.live/*
 // @match          https://boosty.to/*
 // @match          https://kick.com/*
@@ -30,20 +30,24 @@
         chatInputSelector: '.ce-paragraph.cdx-block[contenteditable="true"]'
     }, {
         domain: 'kick.com',
+        scrollableSelector: '.overflow-x-hidden.overflow-y-scroll.py-3',
         chatInputSelector: '[id="message-input"][contenteditable="true"]'
     }, {
-        domain: 'twitch.tv',
-        chatInputSelector: '.gWqzmh'
+        domain: 'www.twitch.tv',
+        scrollableSelector: '.scrollable-contents',
+        chatInputSelector: '.chat-wysiwyg-input__placeholder'
     }, {
         domain: 'goodgame.ru',
+        scrollableSelector: '.tse-scroll-content',
         chatInputSelector: '.textarea[contenteditable="true"]'
     }, {
         domain: 'trovo.live',
+        scrollableSelector: '.chat-list-box.snap-scroller-content',
         chatInputSelector: '[data-v-71b14096][contenteditable="true"]'
     }, {
         domain: 'nuum.ru',
         chatInputSelector: '.chat-input__input.input'
-    },];
+    }];
 
     function getCurrentSiteConfig() {
         const currentDomain = window.location.hostname;
@@ -159,83 +163,88 @@
 
     let processChatImage = () => {
         let imageExtensions = ['.jpeg', '.jpg', '.png', '.gif', '.webp', '.avif'];
-        let links = [...document.querySelectorAll('[href]'),];
+        let links = [...document.querySelectorAll('[href]')];
         let siteConfig = getCurrentSiteConfig();
         links.forEach((imageElement) => {
+            if (imageElement.dataset.processed === 'true') {
+                return;
+            }
             let imageLink = imageElement.getAttribute('href');
             if (imageLink.endsWith('.gifv')) {
                 imageLink = imageLink.slice(0, -1);
                 imageElement.setAttribute('href', imageLink);
                 imageElement.textContent = imageLink;
             }
-            let matched = imageLink.match(/(\.(jpeg|jpg|png|gif|webp|avif))(\S*)/i);
-            if (matched !== null) {
-                imageElement.setAttribute('href', imageLink);
-                imageElement.textContent = imageLink;
-                imageElement.style.display = 'none';
-                if (imageExtensions.some((ext) => imageLink.includes(ext))) {
-                    let image = document.createElement('img');
-                    image.setAttribute('src', imageLink);
-                    image.style.maxWidth = '100%';
-                    image.style.maxHeight = '322px';
-                    image.style.display = 'block';
-                    image.style.cursor = 'pointer';
-                    image.style.borderRadius = '4px';
-                    image.style.margin = '4px';
-                    let clicks = 0;
-                    image.addEventListener('mousedown', (event) => {
-                        if (event.which === 2) {
-                            event.preventDefault();
-                            window.open(imageLink, '_blank');
-                        }
-                    });
-                    image.addEventListener('click', (event) => {
-                        const doubleClickDelay = 400;
-                        clicks++;
-                        if (clicks === 1) {
-                            setTimeout(() => {
-                                if (clicks === 1) {
-                                    navigator.clipboard.writeText(imageLink);
-                                }
-                                clicks = 0;
-                            }, doubleClickDelay);
-                        } else if (clicks === 2) {
-                            window.open(imageLink, '_blank');
-                            clicks = 0;
-                        }
-                        image.onload = () => {
-                            if (!imageLink.imageLoaded) {
-                                imageLink.imageLoaded = true;
-                                let wrapperDiv = document.createElement('div');
-                                wrapperDiv.style.display = 'inline-block';
-                                wrapperDiv.style.maxWidth = '100%';
-                                wrapperDiv.style.position = 'relative';
-                                wrapperDiv.appendChild(image);
-                                imageLink.parentNode.insertBefore(wrapperDiv, imageLink.nextSibling);
-                            }
-                        };
-                    });
-                    let parent = imageElement.parentElement;
-                    parent.appendChild(image);
-                    parent.removeChild(imageElement);
+            let matched = imageExtensions.some((ext) => imageLink.includes(ext));
+            if (matched) {
+                imageElement.dataset.processed = 'true';
+
+                let image = new Image();
+                image.onload = () => {
+                    let wrapperDiv = document.createElement('div');
+                    wrapperDiv.style.display = 'inline-block';
+                    wrapperDiv.style.maxWidth = '100%';
+                    wrapperDiv.style.position = 'relative';
+                    wrapperDiv.appendChild(image);
+                    imageElement.parentNode.insertBefore(wrapperDiv, imageElement.nextSibling);
+                    imageElement.style.display = 'none';
                     if (siteConfig && siteConfig.scrollableSelector) {
                         let scrollableElement = document.querySelector(siteConfig.scrollableSelector);
                         scrollableElement.scrollTop = scrollableElement.scrollHeight;
                     } else {
                         parent.scrollIntoView(false);
                     }
-                }
+                };
+                image.src = imageLink;
+                image.style.maxWidth = '100%';
+                image.style.maxHeight = '322px';
+                image.style.display = 'block';
+                image.style.cursor = 'pointer';
+                image.style.borderRadius = '4px';
+                image.style.margin = '4px';
+                let clicks = 0;
+                image.addEventListener('mousedown', (event) => {
+                    if (event.which === 2) {
+                        event.preventDefault();
+                        window.open(imageLink, '_blank');
+                    }
+                });
+                image.addEventListener('click', (event) => {
+                    const doubleClickDelay = 400;
+                    clicks++;
+                    if (clicks === 1) {
+                        setTimeout(() => {
+                            if (clicks === 1) {
+                                navigator.clipboard.writeText(imageLink).then(() => {
+                                    console.log('Image link copied to clipboard');
+                                }).catch(err => {
+                                    console.error('[CID] Error copying image link to clipboard', err);
+                                });
+                            }
+                            clicks = 0;
+                        }, doubleClickDelay);
+                    } else if (clicks === 2) {
+                        window.open(imageLink, '_blank');
+                        clicks = 0;
+                    }
+                });
             }
         });
     };
 
     let processChatVideo = () => {
         let videoExtensions = ['.mp4', '.webm', '.mov'];
-        let links = [...document.querySelectorAll('[href]'),];
+        let links = [...document.querySelectorAll('[href]')];
         let siteConfig = getCurrentSiteConfig();
         links.forEach((videoElement) => {
+            if (videoElement.dataset.processed === 'true') {
+                return;
+            }
             let videoLink = videoElement.getAttribute('href');
-            if (videoExtensions.some((ext) => videoLink.includes(ext))) {
+            let matched = videoExtensions.some((ext) => videoLink.includes(ext));
+            if (matched) {
+                videoElement.dataset.processed = 'true';
+
                 let video = document.createElement('video');
                 video.setAttribute('src', videoLink);
                 video.setAttribute('loop', 'loop');
@@ -270,6 +279,9 @@
                     wrapperDiv.style.display = 'inline-block';
                     wrapperDiv.style.maxWidth = '100%';
                     wrapperDiv.style.position = 'relative';
+                    wrapperDiv.appendChild(video);
+                    videoElement.parentNode.insertBefore(wrapperDiv, videoElement.nextSibling);
+                    videoElement.style.display = 'none';
                     if (siteConfig && siteConfig.scrollableSelector) {
                         let scrollableElement = document.querySelector(siteConfig.scrollableSelector);
                         scrollableElement.scrollTop = scrollableElement.scrollHeight;
@@ -277,20 +289,23 @@
                         parent.scrollIntoView(false);
                     }
                 };
-                let parent = videoElement.parentElement;
-                parent.appendChild(video);
-                parent.removeChild(videoElement);
             }
         });
     };
 
     let processChatAudio = () => {
         let audioExtensions = ['.mp3', '.ogg'];
-        let links = [...document.querySelectorAll('[href]'),];
+        let links = [...document.querySelectorAll('[href]')];
         let siteConfig = getCurrentSiteConfig();
         links.forEach((audioElement) => {
+            if (audioElement.dataset.processed === 'true') {
+                return;
+            }
             let audioLink = audioElement.getAttribute('href');
-            if (audioExtensions.some((ext) => audioLink.includes(ext))) {
+            let matched = audioExtensions.some((ext) => audioLink.includes(ext));
+            if (matched) {
+                audioElement.dataset.processed = 'true';
+
                 let audio = document.createElement('audio');
                 audio.setAttribute('src', audioLink);
                 audio.setAttribute('loop', 'loop');
@@ -324,6 +339,9 @@
                     wrapperDiv.style.display = 'inline-block';
                     wrapperDiv.style.maxWidth = '100%';
                     wrapperDiv.style.position = 'relative';
+                    wrapperDiv.appendChild(audio);
+                    audioElement.parentNode.insertBefore(wrapperDiv, audioElement.nextSibling);
+                    audioElement.style.display = 'none';
                     if (siteConfig && siteConfig.scrollableSelector) {
                         let scrollableElement = document.querySelector(siteConfig.scrollableSelector);
                         scrollableElement.scrollTop = scrollableElement.scrollHeight;
@@ -331,21 +349,16 @@
                         parent.scrollIntoView(false);
                     }
                 };
-                let parent = audioElement.parentElement;
-                parent.appendChild(audio);
-                parent.removeChild(audioElement);
             }
         });
     };
 
-    let processChatMedia = (callback = null, timeout = null) => {
+    processChatImage();
+    processChatVideo();
+    processChatAudio();
+    setInterval(() => {
         processChatImage();
         processChatVideo();
         processChatAudio();
-        if (callback) {
-            setTimeout(() => callback(callback), timeout);
-        }
-    };
-
-    processChatMedia((callback) => processChatMedia(callback));
+    }, null);
 })();
