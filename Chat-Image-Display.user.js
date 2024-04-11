@@ -149,6 +149,13 @@
         }
     }
 
+    function handleFilePaste(event) {
+        const file = event.clipboardData.items?.[0].getAsFile();
+        if (file) {
+            uploadToKappa(file);
+        }
+    }
+
     function handleFileDrop(event) {
         event.preventDefault();
         const files = event.dataTransfer.files;
@@ -156,6 +163,8 @@
             uploadToKappa(files[0]);
         }
     }
+
+    document.addEventListener('paste', handleFilePaste);
     document.addEventListener('drop', handleFileDrop);
     document.addEventListener('dragover', function (event) {
         event.preventDefault();
