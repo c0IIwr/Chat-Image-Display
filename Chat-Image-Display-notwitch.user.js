@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name           Chat Image Display
+// @name           Chat Image Display (без твича)
 // @namespace      https://c0iiwr.github.io/Chat-Image-Display/
 // @version        1.14
 // @description    Displaying images, video, and audio in chat
