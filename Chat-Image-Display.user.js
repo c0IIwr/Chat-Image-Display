@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name           Chat Image Display
 // @namespace      https://c0iiwr.github.io/Chat-Image-Display/
-// @version        1.15
+// @version        1.16
 // @description    Displaying images, video, and audio in chat
 // @description:ru Отображение изображений, видео и аудио в чате
 // @author         c0IIwr
@@ -70,6 +70,14 @@
     ) {
       likeButton.click();
     }
+
+    let likeNuumButton = document.querySelector(".reactions__button");
+    if (
+      likeNuumButton &&
+      !likeNuumButton.classList.contains("button--active")
+    ) {
+      likeNuumButton.click();
+    }
   }
 
   function clickBonusButton() {
@@ -80,6 +88,7 @@
       bonusButton.click();
     }
   }
+
   setInterval(() => {
     clickLikeButton();
     clickBonusButton();
