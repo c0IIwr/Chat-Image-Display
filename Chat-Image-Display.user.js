@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name           Chat Image Display
 // @namespace      https://c0iiwr.github.io/Chat-Image-Display/
-// @version        1.16
+// @version        1.17
 // @description    Displaying images, video, and audio in chat
 // @description:ru Отображение изображений, видео и аудио в чате
 // @author         c0IIwr
@@ -54,6 +54,7 @@
     {
       domain: "nuum.ru",
       chatInputSelector: ".chat-input__input.input",
+      messageSelector: ".message__body-text",
     },
   ];
 
@@ -199,10 +200,15 @@
   }
 
   function processChatLinks() {
-    const messages = document.querySelectorAll(".message__body-text");
+    const currentSiteConfig = getCurrentSiteConfig();
+    const messageSelector =
+      currentSiteConfig.messageSelector || ".message__body-text";
+    const messages = document.querySelectorAll(messageSelector);
     messages.forEach(function (message) {
       if (!message.dataset.processed) {
-        message.innerHTML = linkify(message.textContent);
+        if (!message.querySelector('img[class*="sticker"]')) {
+          message.innerHTML = linkify(message.textContent);
+        }
         message.dataset.processed = "true";
       }
     });
