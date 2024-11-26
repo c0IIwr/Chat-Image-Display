@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name           Chat Image Display
 // @namespace      https://c0iiwr.github.io/Chat-Image-Display/
-// @version        1.17
+// @version        1.18
 // @description    Displaying images, video, and audio in chat
 // @description:ru Отображение изображений, видео и аудио в чате
 // @author         c0IIwr
+// @match          https://live.vkvideo.ru/*
 // @match          https://live.vkplay.ru/*
 // @match          https://www.twitch.tv/*
 // @match          https://goodgame.ru/*
