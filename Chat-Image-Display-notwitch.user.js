@@ -6,7 +6,6 @@
 // @description:ru Отображение изображений, видео и аудио в чате
 // @author         c0IIwr
 // @match          https://live.vkvideo.ru/*
-// @match          https://live.vkplay.ru/*
 // @match          https://goodgame.ru/*
 // @match          https://trovo.live/*
 // @match          https://boosty.to/*
@@ -22,7 +21,7 @@
 
   const siteConfigs = [
     {
-      domain: "live.vkplay.ru",
+      domain: "live.vkvideo.ru",
       scrollableSelector: ".ChatBoxBase_root_k1P9S",
       chatInputSelector: '.ce-paragraph.cdx-block[contenteditable="true"]',
     },
