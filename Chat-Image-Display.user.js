@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name           Chat Image Display
 // @namespace      https://c0iiwr.github.io/Chat-Image-Display/
-// @version        1.18
+// @version        1.19
 // @description    Displaying images, video, and audio in chat
 // @description:ru Отображение изображений, видео и аудио в чате
 // @author         c0IIwr
@@ -11,8 +11,7 @@
 // @match          https://trovo.live/*
 // @match          https://boosty.to/*
 // @match          https://kick.com/*
-// @match          https://nuum.ru/*
-// @connect        kappa.lol
+// @connect        segs.lol
 // @icon           https://cdn-icons-png.flaticon.com/512/6631/6631821.png
 // @grant          GM_xmlhttpRequest
 // ==/UserScript==
@@ -34,12 +33,13 @@
     {
       domain: "kick.com",
       scrollableSelector: ".overflow-x-hidden.overflow-y-scroll.py-3",
-      chatInputSelector: '[id="message-input"][contenteditable="true"]',
+      placeholderSelector:
+        "#chat-input-wrapper div.pointer-events-none.absolute",
     },
     {
       domain: "www.twitch.tv",
       scrollableSelector: ".scrollable-contents",
-      chatInputSelector: ".chat-wysiwyg-input__placeholder",
+      placeholderSelector: ".chat-wysiwyg-input__placeholder",
     },
     {
       domain: "goodgame.ru",
@@ -51,11 +51,6 @@
       scrollableSelector: ".chat-list-box.snap-scroller-content",
       chatInputSelector: '[data-v-71b14096][contenteditable="true"]',
     },
-    {
-      domain: "nuum.ru",
-      chatInputSelector: ".chat-input__input.input",
-      messageSelector: ".message__body-text",
-    },
   ];
 
   function getCurrentSiteConfig() {
@@ -63,7 +58,21 @@
     return siteConfigs.find((config) => currentDomain.includes(config.domain));
   }
 
+  const siteConfig = getCurrentSiteConfig();
+
+  function isVKVideoAuthorized() {
+    if (siteConfig && siteConfig.domain === "live.vkvideo.ru") {
+      const loginButton = document.querySelector(
+        "button.TopMenuRightUnAuthorized_button_wn5kP"
+      );
+      return !loginButton;
+    }
+    return true;
+  }
+
   function clickLikeButton() {
+    if (!isVKVideoAuthorized()) return;
+
     let likeButton = document.querySelector("[class^=LikeButton_]");
     if (
       likeButton &&
@@ -71,23 +80,13 @@
     ) {
       likeButton.click();
     }
-
-    let likeNuumButton = document.querySelector(".reactions__button");
-    if (
-      likeNuumButton &&
-      !likeNuumButton.classList.contains("button--active")
-    ) {
-      likeNuumButton.click();
-    }
   }
 
   function clickBonusButton() {
     let bonusButton = document.querySelector(
       "[class^=PointActions_buttonBonus_]"
     );
-    if (bonusButton) {
-      bonusButton.click();
-    }
+    if (bonusButton) bonusButton.click();
   }
 
   setInterval(() => {
@@ -95,346 +94,326 @@
     clickBonusButton();
   }, 1000);
 
-  const currentSiteConfig = getCurrentSiteConfig();
   const loadingAnimation = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
   let animationIndex = 0;
-  let animationInterval;
+  let animationInterval = null;
 
   function displayLoadingMessage() {
-    const chatInput = document.querySelector(
-      currentSiteConfig.chatInputSelector
-    );
-    if (chatInput) {
-      startLoadingAnimation(chatInput);
-    }
-  }
+    let target = null;
 
-  function startLoadingAnimation(chatInput) {
-    animationInterval = setInterval(function () {
-      chatInput.textContent = "Загрузка " + loadingAnimation[animationIndex];
+    if (
+      siteConfig.domain === "www.twitch.tv" ||
+      siteConfig.domain === "kick.com"
+    ) {
+      target = document.querySelector(siteConfig.placeholderSelector);
+    } else {
+      target = document.querySelector(siteConfig.chatInputSelector);
+    }
+
+    if (!target) return;
+
+    target.textContent = "";
+
+    animationInterval = setInterval(() => {
+      const text = "Загрузка " + loadingAnimation[animationIndex];
       animationIndex = (animationIndex + 1) % loadingAnimation.length;
+      target.textContent = text;
     }, 100);
   }
 
-  function stopLoadingAnimation(chatInput) {
-    clearInterval(animationInterval);
-    chatInput.textContent = "";
+  function showSuccessMessage() {
+    if (
+      siteConfig.domain === "www.twitch.tv" ||
+      siteConfig.domain === "kick.com"
+    ) {
+      const placeholder = document.querySelector(
+        siteConfig.placeholderSelector
+      );
+      if (placeholder) {
+        placeholder.textContent = "Ссылка скопирована в буфер обмена";
+        setTimeout(() => {
+          if (placeholder.textContent === "Ссылка скопирована в буфер обмена") {
+            placeholder.textContent = "Send a message";
+          }
+        }, 3000);
+      }
+    }
+  }
+
+  function stopLoadingAnimation() {
+    if (animationInterval) {
+      clearInterval(animationInterval);
+      animationInterval = null;
+    }
   }
 
   function getFileExtension(fileName) {
-    return fileName.slice(((fileName.lastIndexOf(".") - 1) >>> 0) + 2);
+    const parts = fileName.split(".");
+    return parts.length > 1 ? "." + parts.pop().toLowerCase() : "";
   }
 
-  function copyToClipboard(text) {
-    const input = document.createElement("input");
-    input.style.position = "fixed";
-    input.style.opacity = 0;
-    input.value = text;
-    document.body.appendChild(input);
-    input.select();
-    document.execCommand("copy");
-    document.body.removeChild(input);
+  async function copyToClipboard(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch (err) {
+      console.error("[CID] Clipboard API failed:", err);
+      return false;
+    }
   }
 
-  function uploadToKappa(file) {
+  let currentFileExtension = "";
+
+  function uploadFile(file) {
+    currentFileExtension = getFileExtension(file.name);
     displayLoadingMessage();
-    let formData = new FormData();
+    const formData = new FormData();
     formData.append("file", file);
+
     GM_xmlhttpRequest({
       method: "POST",
-      url: "https://kappa.lol/api/upload",
+      url: "https://segs.lol/api/upload",
       data: formData,
-      onload: function (response) {
-        stopLoadingAnimation(
-          document.querySelector(currentSiteConfig.chatInputSelector)
-        );
-        const jsonResponse = JSON.parse(response.responseText);
-        const link = jsonResponse.link;
-        const fileExtension = getFileExtension(file.name);
-        const completeLink = `${link}.${fileExtension}`;
-        copyToClipboard(completeLink);
-        postLinkInChat(completeLink);
+      onload: async (response) => {
+        stopLoadingAnimation();
+        try {
+          const jsonResponse = JSON.parse(response.responseText);
+          let link = jsonResponse.link;
+          if (currentFileExtension) link += currentFileExtension;
+
+          let copied = false;
+          for (let i = 0; i < 3; i++) {
+            copied = await copyToClipboard(link);
+            if (copied) break;
+            await new Promise((resolve) => setTimeout(resolve, 300));
+          }
+
+          if (
+            siteConfig.domain === "www.twitch.tv" ||
+            siteConfig.domain === "kick.com"
+          ) {
+            showSuccessMessage();
+          } else {
+            const chatInput = document.querySelector(
+              siteConfig.chatInputSelector
+            );
+            if (chatInput) {
+              chatInput.textContent = link;
+              chatInput.dispatchEvent(
+                new Event("input", { bubbles: true, cancelable: true })
+              );
+              chatInput.focus();
+            }
+          }
+        } catch (e) {
+          console.error(
+            "[CID] Error parsing segs.lol response",
+            e,
+            response.responseText
+          );
+        }
       },
-      onerror: function (response) {
-        stopLoadingAnimation(
-          document.querySelector(currentSiteConfig.chatInputSelector)
-        );
-        console.error("[CID] Kappa upload error", response);
+      onerror: (response) => {
+        stopLoadingAnimation();
+        console.error("[CID] segs.lol upload error", response);
       },
     });
   }
 
-  function postLinkInChat(link) {
-    const chatInput = document.querySelector(
-      currentSiteConfig.chatInputSelector
-    );
-    if (chatInput) {
-      chatInput.textContent = link;
-      const event = new Event("input", {
-        bubbles: true,
-        cancelable: true,
-      });
-      chatInput.dispatchEvent(event);
-    } else {
-      console.error("[CID] Chat input not found");
+  function handlePaste(event) {
+    const items = event.clipboardData?.items;
+    if (!items) return;
+
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].kind === "file") {
+        const file = items[i].getAsFile();
+        if (file) {
+          uploadFile(file);
+          event.preventDefault();
+          break;
+        }
+      }
     }
   }
 
   function handleFileDrop(event) {
     event.preventDefault();
     const files = event.dataTransfer.files;
-    if (files.length) {
-      uploadToKappa(files[0]);
+    if (files.length > 0) {
+      uploadFile(files[0]);
     }
   }
+
+  document.addEventListener("paste", handlePaste);
   document.addEventListener("drop", handleFileDrop);
-  document.addEventListener("dragover", function (event) {
-    event.preventDefault();
-  });
+  document.addEventListener("dragover", (event) => event.preventDefault());
 
-  function linkify(text) {
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-    return text.replace(urlRegex, function (url) {
-      return '<a href="' + url + '" target="_blank">' + url + "</a>";
-    });
-  }
+  function processMedia(extensions, createMediaElementCallback) {
+    const links = [
+      ...document.querySelectorAll('a[href]:not([data-processed="true"])'),
+    ];
 
-  function processChatLinks() {
-    const currentSiteConfig = getCurrentSiteConfig();
-    const messageSelector =
-      currentSiteConfig.messageSelector || ".message__body-text";
-    const messages = document.querySelectorAll(messageSelector);
-    messages.forEach(function (message) {
-      if (!message.dataset.processed) {
-        if (!message.querySelector('img[class*="sticker"]')) {
-          message.innerHTML = linkify(message.textContent);
+    links.forEach((linkElement) => {
+      let href = linkElement.getAttribute("href");
+
+      if (
+        siteConfig &&
+        siteConfig.domain === "kick.com" &&
+        (href.includes("files.kick.com") ||
+          href.includes("/img/default-channel-banners/"))
+      ) {
+        return;
+      }
+
+      if (
+        siteConfig &&
+        siteConfig.scrollableSelector &&
+        siteConfig.domain !== "kick.com"
+      ) {
+        if (!linkElement.closest(siteConfig.scrollableSelector)) return;
+      }
+
+      let linkLower = href.toLowerCase();
+
+      if (linkLower.endsWith(".gifv")) {
+        linkLower = linkLower.slice(0, -1);
+        linkElement.setAttribute("href", linkLower);
+        linkElement.textContent = linkLower;
+      }
+
+      if (extensions.some((ext) => linkLower.includes(ext))) {
+        linkElement.dataset.processed = "true";
+
+        const media = createMediaElementCallback(href);
+
+        if (media) {
+          media.onload = media.onloadedmetadata = () => {
+            const wrapperDiv = document.createElement("div");
+            wrapperDiv.style.display = "inline-block";
+            wrapperDiv.style.maxWidth = "100%";
+            wrapperDiv.style.position = "relative";
+            wrapperDiv.appendChild(media);
+
+            linkElement.parentNode.insertBefore(
+              wrapperDiv,
+              linkElement.nextSibling
+            );
+            linkElement.style.display = "none";
+
+            if (
+              siteConfig &&
+              siteConfig.scrollableSelector &&
+              siteConfig.domain !== "goodgame.ru"
+            ) {
+              const scrollable = document.querySelector(
+                siteConfig.scrollableSelector
+              );
+              if (scrollable) scrollable.scrollTop = scrollable.scrollHeight;
+            }
+          };
+
+          Object.assign(media.style, {
+            maxWidth: "100%",
+            maxHeight: "322px",
+            display: "block",
+            cursor: "pointer",
+            borderRadius: "4px",
+            margin: "4px",
+          });
+
+          media.addEventListener("click", (e) => {
+            if (e.button === 0) {
+              e.preventDefault();
+              navigator.clipboard.writeText(href);
+              window.open(href, "_blank", "noopener,noreferrer");
+            }
+          });
+
+          media.addEventListener("auxclick", (e) => {
+            if (e.button === 1) {
+              e.preventDefault();
+              const newWindow = window.open(
+                href,
+                "_blank",
+                "noopener,noreferrer"
+              );
+              if (newWindow) newWindow.blur();
+              window.focus();
+            }
+          });
+
+          media.addEventListener("mousedown", (e) => {
+            if (e.button === 1) e.preventDefault();
+          });
         }
-        message.dataset.processed = "true";
       }
     });
   }
 
-  let processChatImage = () => {
-    let imageExtensions = [".jpeg", ".jpg", ".png", ".gif", ".webp", ".avif"];
-    let links = [...document.querySelectorAll("[href]")];
-    let siteConfig = getCurrentSiteConfig();
-    links.forEach((imageElement) => {
-      if (imageElement.dataset.processed === "true") {
-        return;
-      }
-      let imageLink = imageElement.getAttribute("href");
-      if (imageLink.endsWith(".gifv")) {
-        imageLink = imageLink.slice(0, -1);
-        imageElement.setAttribute("href", imageLink);
-        imageElement.textContent = imageLink;
-      }
-      let matched = imageExtensions.some((ext) => imageLink.includes(ext));
-      if (matched) {
-        imageElement.dataset.processed = "true";
-
-        let image = new Image();
-        image.onload = () => {
-          let wrapperDiv = document.createElement("div");
-          wrapperDiv.style.display = "inline-block";
-          wrapperDiv.style.maxWidth = "100%";
-          wrapperDiv.style.position = "relative";
-          wrapperDiv.appendChild(image);
-          imageElement.parentNode.insertBefore(
-            wrapperDiv,
-            imageElement.nextSibling
-          );
-          imageElement.style.display = "none";
-          if (siteConfig && siteConfig.scrollableSelector) {
-            let scrollableElement = document.querySelector(
-              siteConfig.scrollableSelector
-            );
-            scrollableElement.scrollTop = scrollableElement.scrollHeight;
-          } else {
-            parent.scrollIntoView(false);
-          }
-        };
-        image.src = imageLink;
-        image.style.maxWidth = "100%";
-        image.style.maxHeight = "322px";
-        image.style.display = "block";
-        image.style.cursor = "pointer";
-        image.style.borderRadius = "4px";
-        image.style.margin = "4px";
-        let clicks = 0;
-        image.addEventListener("mousedown", (event) => {
-          if (event.which === 2) {
-            event.preventDefault();
-            window.open(imageLink, "_blank");
-          }
-        });
-        image.addEventListener("click", (event) => {
-          const doubleClickDelay = 400;
-          clicks++;
-          if (clicks === 1) {
-            setTimeout(() => {
-              if (clicks === 1) {
-                navigator.clipboard
-                  .writeText(imageLink)
-                  .then(() => {
-                    console.log("Image link copied to clipboard");
-                  })
-                  .catch((err) => {
-                    console.error(
-                      "[CID] Error copying image link to clipboard",
-                      err
-                    );
-                  });
-              }
-              clicks = 0;
-            }, doubleClickDelay);
-          } else if (clicks === 2) {
-            window.open(imageLink, "_blank");
-            clicks = 0;
-          }
-        });
-      }
+  function processChatImage() {
+    processMedia([".jpeg", ".jpg", ".png", ".gif", ".webp", ".avif"], (src) => {
+      const img = new Image();
+      img.src = src;
+      return img;
     });
-  };
+  }
 
-  let processChatVideo = () => {
-    let videoExtensions = [".mp4", ".webm", ".mov"];
-    let links = [...document.querySelectorAll("[href]")];
-    let siteConfig = getCurrentSiteConfig();
-    links.forEach((videoElement) => {
-      if (videoElement.dataset.processed === "true") {
-        return;
-      }
-      let videoLink = videoElement.getAttribute("href");
-      let matched = videoExtensions.some((ext) => videoLink.includes(ext));
-      if (matched) {
-        videoElement.dataset.processed = "true";
+  function processChatVideo() {
+    processMedia([".mp4", ".webm", ".mov"], (src) => {
+      const video = document.createElement("video");
+      video.src = src;
+      video.loop = true;
+      video.muted = true;
+      video.preload = "auto";
 
-        let video = document.createElement("video");
-        video.setAttribute("src", videoLink);
-        video.setAttribute("loop", "loop");
-        video.setAttribute("muted", "muted");
-        video.setAttribute("preload", "auto");
-        video.style.maxWidth = "100%";
-        video.style.maxHeight = "322px";
-        video.style.display = "block";
-        video.style.borderRadius = "4px";
-        video.style.margin = "4px";
-        video.addEventListener("mousedown", (event) => {
-          if (event.which === 2) {
-            event.preventDefault();
-            window.open(videoLink, "_blank");
-          }
-        });
-        let controlsTimeout;
-        video.onmouseover = () => {
-          clearTimeout(controlsTimeout);
-          video.play();
-          video.controls = true;
+      let timeout;
+      video.onmouseover = () => {
+        clearTimeout(timeout);
+        video.play();
+        video.controls = true;
+      };
+      video.onmouseout = () => {
+        timeout = setTimeout(() => {
           video.muted = true;
-        };
-        video.onmouseout = () => {
-          controlsTimeout = setTimeout(() => {
-            video.controls = false;
-            video.muted = true;
-          }, 500);
-        };
-        video.onloadedmetadata = () => {
-          let wrapperDiv = document.createElement("div");
-          wrapperDiv.style.display = "inline-block";
-          wrapperDiv.style.maxWidth = "100%";
-          wrapperDiv.style.position = "relative";
-          wrapperDiv.appendChild(video);
-          videoElement.parentNode.insertBefore(
-            wrapperDiv,
-            videoElement.nextSibling
-          );
-          videoElement.style.display = "none";
-          if (siteConfig && siteConfig.scrollableSelector) {
-            let scrollableElement = document.querySelector(
-              siteConfig.scrollableSelector
-            );
-            scrollableElement.scrollTop = scrollableElement.scrollHeight;
-          } else {
-            parent.scrollIntoView(false);
-          }
-        };
-      }
+          video.controls = false;
+        }, 3000);
+      };
+
+      return video;
     });
-  };
+  }
 
-  let processChatAudio = () => {
-    let audioExtensions = [".mp3", ".ogg"];
-    let links = [...document.querySelectorAll("[href]")];
-    let siteConfig = getCurrentSiteConfig();
-    links.forEach((audioElement) => {
-      if (audioElement.dataset.processed === "true") {
-        return;
-      }
-      let audioLink = audioElement.getAttribute("href");
-      let matched = audioExtensions.some((ext) => audioLink.includes(ext));
-      if (matched) {
-        audioElement.dataset.processed = "true";
+  function processChatAudio() {
+    processMedia([".mp3", ".ogg"], (src) => {
+      const audio = document.createElement("audio");
+      audio.src = src;
+      audio.loop = true;
+      audio.muted = true;
+      audio.preload = "auto";
+      audio.controls = true;
 
-        let audio = document.createElement("audio");
-        audio.setAttribute("src", audioLink);
-        audio.setAttribute("loop", "loop");
-        audio.setAttribute("muted", "muted");
-        audio.setAttribute("preload", "auto");
-        audio.setAttribute("controls", "controls");
-        audio.style.maxWidth = "100%";
-        audio.style.maxHeight = "322px";
-        audio.style.display = "block";
-        audio.style.borderRadius = "4px";
-        audio.style.margin = "4px";
-        audio.addEventListener("mousedown", (event) => {
-          if (event.which === 2) {
-            event.preventDefault();
-            window.open(audioLink, "_blank");
-          }
-        });
-        let controlsTimeout;
-        audio.onmouseover = () => {
-          clearTimeout(controlsTimeout);
-          audio.play();
+      let timeout;
+      audio.onmouseover = () => {
+        clearTimeout(timeout);
+        audio.play();
+      };
+      audio.onmouseout = () => {
+        timeout = setTimeout(() => {
           audio.muted = true;
-        };
-        audio.onmouseout = () => {
-          controlsTimeout = setTimeout(() => {
-            audio.muted = true;
-          }, 500);
-        };
-        audio.onloadedmetadata = () => {
-          let wrapperDiv = document.createElement("div");
-          wrapperDiv.style.display = "inline-block";
-          wrapperDiv.style.maxWidth = "100%";
-          wrapperDiv.style.position = "relative";
-          wrapperDiv.appendChild(audio);
-          audioElement.parentNode.insertBefore(
-            wrapperDiv,
-            audioElement.nextSibling
-          );
-          audioElement.style.display = "none";
-          if (siteConfig && siteConfig.scrollableSelector) {
-            let scrollableElement = document.querySelector(
-              siteConfig.scrollableSelector
-            );
-            scrollableElement.scrollTop = scrollableElement.scrollHeight;
-          } else {
-            parent.scrollIntoView(false);
-          }
-        };
-      }
+        }, 3000);
+      };
+
+      return audio;
     });
-  };
+  }
 
   processChatImage();
   processChatVideo();
   processChatAudio();
-  processChatLinks();
+
   setInterval(() => {
     processChatImage();
     processChatVideo();
     processChatAudio();
-    processChatLinks();
-  }, null);
+  }, 1000);
 })();
