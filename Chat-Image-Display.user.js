@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name           Chat Image Display
 // @namespace      https://c0iiwr.github.io/Chat-Image-Display/
-// @version        1.19
+// @version        1.20
 // @description    Displaying images, video, and audio in chat
 // @description:ru Отображение изображений, видео и аудио в чате
 // @author         c0IIwr
@@ -254,13 +254,14 @@
     ];
 
     links.forEach((linkElement) => {
-      let href = linkElement.getAttribute("href");
+      let originalHref = linkElement.getAttribute("href");
+      let checkHref = originalHref.toLowerCase();
 
       if (
         siteConfig &&
         siteConfig.domain === "kick.com" &&
-        (href.includes("files.kick.com") ||
-          href.includes("/img/default-channel-banners/"))
+        (originalHref.includes("files.kick.com") ||
+          originalHref.includes("/img/default-channel-banners/"))
       ) {
         return;
       }
@@ -273,18 +274,16 @@
         if (!linkElement.closest(siteConfig.scrollableSelector)) return;
       }
 
-      let linkLower = href.toLowerCase();
-
-      if (linkLower.endsWith(".gifv")) {
-        linkLower = linkLower.slice(0, -1);
-        linkElement.setAttribute("href", linkLower);
-        linkElement.textContent = linkLower;
+      let mediaSrc = originalHref;
+      if (checkHref.endsWith(".gifv")) {
+        checkHref = checkHref.slice(0, -1);
+        mediaSrc = originalHref.slice(0, -1);
       }
 
-      if (extensions.some((ext) => linkLower.includes(ext))) {
+      if (extensions.some((ext) => checkHref.includes(ext))) {
         linkElement.dataset.processed = "true";
 
-        const media = createMediaElementCallback(href);
+        const media = createMediaElementCallback(mediaSrc);
 
         if (media) {
           media.onload = media.onloadedmetadata = () => {
@@ -324,8 +323,8 @@
           media.addEventListener("click", (e) => {
             if (e.button === 0) {
               e.preventDefault();
-              navigator.clipboard.writeText(href);
-              window.open(href, "_blank", "noopener,noreferrer");
+              navigator.clipboard.writeText(originalHref);
+              window.open(originalHref, "_blank", "noopener,noreferrer");
             }
           });
 
@@ -333,7 +332,7 @@
             if (e.button === 1) {
               e.preventDefault();
               const newWindow = window.open(
-                href,
+                originalHref,
                 "_blank",
                 "noopener,noreferrer"
               );
