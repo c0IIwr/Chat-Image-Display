@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name           Chat Image Display
 // @namespace      https://c0iiwr.github.io/Chat-Image-Display/
-// @version        1.20
+// @version        1.21
 // @description    Displaying images, video, and audio in chat
 // @description:ru Отображение изображений, видео и аудио в чате
 // @author         c0IIwr
@@ -38,7 +38,8 @@
     },
     {
       domain: "www.twitch.tv",
-      scrollableSelector: ".scrollable-contents",
+      scrollableSelector:
+        ".scrollable-contents, [data-a-target='chat-scroller']",
       placeholderSelector: ".chat-wysiwyg-input__placeholder",
     },
     {
@@ -130,9 +131,9 @@
         siteConfig.placeholderSelector
       );
       if (placeholder) {
-        placeholder.textContent = "Ссылка скопирована в буфер обмена";
+        placeholder.textContent = "Ссылка в буфере обмена";
         setTimeout(() => {
-          if (placeholder.textContent === "Ссылка скопирована в буфер обмена") {
+          if (placeholder.textContent === "Ссылка в буфере обмена") {
             placeholder.textContent = "Send a message";
           }
         }, 3000);
@@ -248,6 +249,19 @@
   document.addEventListener("drop", handleFileDrop);
   document.addEventListener("dragover", (event) => event.preventDefault());
 
+  function isChatPaused() {
+    if (document.querySelector(".chat-paused-footer")) {
+      return true;
+    }
+    if (document.querySelector(".seventv-message-buffer-notice")) {
+      return true;
+    }
+    if (document.querySelector(".ChatBoxBase_scrollButton_fK5k7")) {
+      return true;
+    }
+    return false;
+  }
+
   function processMedia(extensions, createMediaElementCallback) {
     const links = [
       ...document.querySelectorAll('a[href]:not([data-processed="true"])'),
@@ -307,7 +321,9 @@
               const scrollable = document.querySelector(
                 siteConfig.scrollableSelector
               );
-              if (scrollable) scrollable.scrollTop = scrollable.scrollHeight;
+              if (scrollable && !isChatPaused()) {
+                scrollable.scrollTop = scrollable.scrollHeight;
+              }
             }
           };
 
@@ -414,5 +430,5 @@
     processChatImage();
     processChatVideo();
     processChatAudio();
-  }, 1000);
+  }, null);
 })();
